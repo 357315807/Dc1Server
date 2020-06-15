@@ -1,6 +1,6 @@
 plugins {
-    id 'org.springframework.boot' version '2.2.0.RELEASE'
-    id 'io.spring.dependency-management' version '1.0.8.RELEASE'
+    id 'org.springframework.boot' version '2.3.1.RELEASE'
+    id 'io.spring.dependency-management' version '1.0.9.RELEASE'
     id 'java'
 }
 
@@ -14,12 +14,12 @@ repositories {
 }
 
 dependencies {
-    implementation 'com.google.code.gson:gson:2.8.5'
-    implementation 'io.netty:netty-all:4.1.38.Final'
+    implementation 'com.google.code.gson:gson:2.8.6'
+    implementation 'io.netty:netty-all:4.1.50.Final'
     //数据库
     implementation 'com.j256.ormlite:ormlite-core:5.1'
     implementation 'com.j256.ormlite:ormlite-jdbc:5.1'
-    implementation 'org.xerial:sqlite-jdbc:3.27.2.1'
+        implementation 'org.xerial:sqlite-jdbc:3.31.1'
 
     implementation 'org.springframework.boot:spring-boot-starter-web'
     testImplementation('org.springframework.boot:spring-boot-starter-test') {

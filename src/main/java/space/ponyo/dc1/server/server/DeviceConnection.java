@@ -4,12 +4,16 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import io.netty.channel.Channel;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import space.ponyo.dc1.server.bean.*;
 import space.ponyo.dc1.server.model.DataPool;
-import space.ponyo.dc1.server.util.LogUtil;
 
 import java.lang.reflect.Type;
-import java.util.concurrent.*;
+import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -18,6 +22,7 @@ import java.util.regex.Pattern;
  */
 
 public class DeviceConnection implements IConnection {
+    private static final Logger logger = LoggerFactory.getLogger(DeviceConnection.class);
     /**
      * 设备上线1
      */
@@ -89,7 +94,7 @@ public class DeviceConnection implements IConnection {
     }
 
     public void processMessage(String msg) {
-        LogUtil.info("device|receive id=" + id + " message=" + msg);
+        logger.info("device|receive id=" + id + " message=" + msg);
         if (msg.contains("action")) {
             if (msg.contains(ACTIVATE)) {
                 //收到dc1上线数据
@@ -120,7 +125,7 @@ public class DeviceConnection implements IConnection {
                 DataPool.update(id, detalKWh);
                 ConnectionManager.getInstance().refreshPhoneDeviceData();
             } else {
-                LogUtil.warning(msg);
+                logger.warn(msg);
             }
         } else {
             if (id == null) {
@@ -149,7 +154,7 @@ public class DeviceConnection implements IConnection {
                     break;
                 }
             } else {
-                LogUtil.warning(msg);
+                logger.warn(msg);
             }
         }
         online.add(true);
@@ -175,7 +180,7 @@ public class DeviceConnection implements IConnection {
                 try {
                     //阻塞线程
                     String message = messageQueue.take();
-                    LogUtil.info("device|send id=" + id + " message=" + message);
+                    logger.info("device|send id=" + id + " message=" + message);
                     channel.writeAndFlush(message + "\n");
                 } catch (InterruptedException | NullPointerException e) {
                     e.printStackTrace();

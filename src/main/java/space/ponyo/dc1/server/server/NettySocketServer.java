@@ -1,25 +1,24 @@
 package space.ponyo.dc1.server.server;
 
 import io.netty.bootstrap.ServerBootstrap;
-import io.netty.buffer.Unpooled;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
-import io.netty.handler.codec.DelimiterBasedFrameDecoder;
-import io.netty.handler.codec.Delimiters;
-import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 import io.netty.handler.codec.LineBasedFrameDecoder;
 import io.netty.handler.codec.string.StringDecoder;
 import io.netty.handler.codec.string.StringEncoder;
 import io.netty.handler.timeout.IdleStateHandler;
 import io.netty.util.CharsetUtil;
-import space.ponyo.dc1.server.util.LogUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.PreDestroy;
 import java.net.InetSocketAddress;
 
 public class NettySocketServer {
+    public static final Logger logger = LoggerFactory.getLogger(NettySocketServer.class);
+
     private static final int PORT_DEVICE = 8000;
     private static final int PORT_PHONE = 8800;
     private EventLoopGroup bossGroup;
@@ -30,7 +29,7 @@ public class NettySocketServer {
      */
     @PreDestroy
     public void close() {
-        LogUtil.info("关闭服务器....");
+        logger.info("关闭服务器....");
         //优雅退出
         bossGroup.shutdownGracefully();
         workerGroup.shutdownGracefully();
@@ -53,10 +52,12 @@ public class NettySocketServer {
             ChannelFuture channelFuturePhone = bootstrap.bind(PORT_PHONE);
             channelFutureDc1.sync();//服务器异步创建绑定
             channelFuturePhone.sync();
-            System.out.println("Server is listening：" + ((InetSocketAddress) channelFutureDc1.channel().localAddress()).getPort());
-            System.out.println("Server is listening：" + ((InetSocketAddress) channelFuturePhone.channel().localAddress()).getPort());
-            channelFutureDc1.channel().closeFuture().sync();//关闭服务器
-            channelFuturePhone.channel().closeFuture().sync();//关闭服务器
+            logger.info("Server is listening, and dc1 Channel Port: {}", ((InetSocketAddress) channelFutureDc1.channel().localAddress()).getPort());
+            logger.info("Server is listening, and phone Channel Port: {}", ((InetSocketAddress) channelFuturePhone.channel().localAddress()).getPort());
+            //关闭服务器
+            channelFutureDc1.channel().closeFuture().sync();
+            //关闭服务器
+            channelFuturePhone.channel().closeFuture().sync();
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
@@ -122,7 +123,7 @@ public class NettySocketServer {
     public static class HeartBeatServerHandler extends ChannelInboundHandlerAdapter {
         @Override
         public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
-            LogUtil.notice("已经15秒未收到客户端的消息了！close");
+            logger.info("已经15秒未收到客户端的消息了！close");
             ctx.channel().close();
         }
     }

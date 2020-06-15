@@ -4,11 +4,12 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import io.netty.channel.Channel;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import space.ponyo.dc1.server.model.DataPool;
 import space.ponyo.dc1.server.model.PlanPool;
 import space.ponyo.dc1.server.model.db.PlanBean;
 import space.ponyo.dc1.server.model.db.PlanDao;
-import space.ponyo.dc1.server.util.LogUtil;
 
 import java.util.ArrayList;
 import java.util.concurrent.Executors;
@@ -23,7 +24,7 @@ import java.util.regex.Pattern;
  */
 
 public class PhoneConnection implements IConnection {
-
+    private static final Logger logger = LoggerFactory.getLogger(PhoneConnection.class);
     //周期消息发送间隔时间（ms）
     private final static int DEFAULT_TIME = 100;
     private Channel channel;
@@ -31,7 +32,7 @@ public class PhoneConnection implements IConnection {
     private Gson gson = new GsonBuilder().disableHtmlEscaping().create();
 
     // 消息队列
-    private final LinkedBlockingQueue<String> messageQueue = new LinkedBlockingQueue<>();
+    private final LinkedBlockingQueue<String> messageQueue = new LinkedBlockingQueue<String>();
     private static ScheduledExecutorService sendMessageScheduleThread;
 
     private Pattern setPattern = Pattern.compile("^id=(?<id>[A-Fa-f0-9:|\\-]{17,18}) status=(?<status>[0|1]{4})$");
@@ -73,7 +74,7 @@ public class PhoneConnection implements IConnection {
      * @param msg
      */
     public void processMessage(String msg) {
-        LogUtil.info("phone|receive id=" + channel.id() + " message=" + msg);
+        logger.info("phone|receive id=" + channel.id() + " message=" + msg);
         msg = msg.replace("\n", "");
         final String[] split = msg.split(" ", 3);
         String action = split[0];
@@ -83,7 +84,7 @@ public class PhoneConnection implements IConnection {
         String token = split[1];
         if ("".equals(token) || !ConnectionManager.getInstance().token.equals(token)) {
             appendMsgToQueue("tip token验证失败！");
-            LogUtil.warning("tip token验证失败！");
+            logger.error("tip token验证失败！");
             return;
         }
         switch (action) {
@@ -171,7 +172,7 @@ public class PhoneConnection implements IConnection {
                 try {
                     //阻塞线程
                     String message = messageQueue.take();
-                    LogUtil.info("phone|send id=" + channel.id() + " message=" + message);
+                    logger.info("phone|send id = {}, message = {}", channel.id(), message);
                     channel.writeAndFlush(message + "\n");
                 } catch (InterruptedException | NullPointerException e) {
                     e.printStackTrace();

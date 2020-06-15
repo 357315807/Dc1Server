@@ -1,10 +1,11 @@
 package space.ponyo.dc1.server.model;
 
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import space.ponyo.dc1.server.model.db.PlanBean;
 import space.ponyo.dc1.server.model.db.PlanDao;
 import space.ponyo.dc1.server.server.ConnectionManager;
-import space.ponyo.dc1.server.util.LogUtil;
 
 import java.sql.SQLException;
 import java.time.Duration;
@@ -18,7 +19,7 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 public class PlanPool {
-
+    private static final Logger logger = LoggerFactory.getLogger(PlanPool.class);
     private static PlanPool instance = new PlanPool();
 
     /**
@@ -93,13 +94,13 @@ public class PlanPool {
         }
         String repeatData = planBean.getRepeatData();
         if (repeatData == null) {
-            LogUtil.warning("周期设置异常！ repeatData=null");
+            logger.error("周期设置异常！ repeatData=null");
             setPlanDisable(planBean);
             return;
         }
         String[] split = repeatData.split(",");
         if (split.length != 2) {
-            LogUtil.warning("周期设置异常！ repeatData格式错误");
+            logger.error("周期设置异常！ repeatData格式错误");
             setPlanDisable(planBean);
             return;
         }
@@ -119,7 +120,7 @@ public class PlanPool {
     private void repeatRunnable(PlanBean planBean, String command) {
         String status = calcStatus(planBean, command);
         ConnectionManager.getInstance().setDc1Status(planBean.getDeviceId(), status);
-        LogUtil.info("repeatAtFixedRate 发送指令：" + status);
+        logger.info("repeatAtFixedRate 发送指令：" + status);
     }
 
     private String calcStatus(PlanBean planBean, String command) {
@@ -169,20 +170,20 @@ public class PlanPool {
                 } else {
                     diffSecond = ONE_DAY_SECOND + diff;
                 }
-                LogUtil.info("下次运行时间 :" + diff / 3600f + "小时");
+                logger.info("下次运行时间 :" + diff / 3600f + "小时");
                 return diffSecond;
             }
 
             case PlanBean.REPEAT_AT_FIXED_RATE: {
                 //按时间的周期性执行
-                LogUtil.warning("周期设置异常！ 不是周期任务执行入口");
+                logger.error("周期设置异常！ 不是周期任务执行入口");
                 setPlanDisable(bean);
                 return 0;
             }
 
             default: {
                 if (bean.getRepeat() == null || bean.getRepeat().equals("")) {
-                    LogUtil.warning("周期设置异常！！");
+                    logger.error("周期设置异常！！");
                     setPlanDisable(bean);
                     return 0;
                 }
@@ -235,7 +236,7 @@ public class PlanPool {
                     i = i + 7;
                 }
                 diffSecond = i * ONE_DAY_SECOND + diff;
-                LogUtil.info("下次运行时间 i:" + i + "天  偏移小时数:" + diff / 3600f);
+                logger.info("下次运行时间 i:" + i + "天  偏移小时数:" + diff / 3600f);
                 return diffSecond;
             }
         }

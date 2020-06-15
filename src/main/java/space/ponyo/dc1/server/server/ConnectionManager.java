@@ -1,8 +1,9 @@
 package space.ponyo.dc1.server.server;
 
 import io.netty.channel.Channel;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import space.ponyo.dc1.server.model.DataPool;
-import space.ponyo.dc1.server.util.LogUtil;
 
 import java.net.InetSocketAddress;
 import java.util.concurrent.ConcurrentHashMap;
@@ -10,6 +11,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class ConnectionManager {
+    public static final Logger logger = LoggerFactory.getLogger(ConnectionManager.class);
     private static final ConnectionManager instance = new ConnectionManager();
     public String token = "";
 
@@ -22,6 +24,11 @@ public class ConnectionManager {
 
     private final ExecutorService executorService = Executors.newFixedThreadPool(10);
 
+    /**
+     * 分发消息
+     * @param channel 通道
+     * @param msg 消息内容
+     */
     public void dispatchMsg(Channel channel, String msg) {
         InetSocketAddress remoteAddress = (InetSocketAddress) (channel.remoteAddress());
         InetSocketAddress localAddress = (InetSocketAddress) (channel.localAddress());
@@ -32,7 +39,7 @@ public class ConnectionManager {
             executorService.execute(() -> {
                 PhoneConnection pc = mPhoneConnectionMap.get(ip + ":" + remotePort);
                 if (pc == null) {
-                    LogUtil.warning("手机未上线 ip:" + ip + ":" + localPort);
+                    logger.error("手机未上线 {}:{}", ip, localPort);
                 } else {
                     pc.processMessage(msg);
                 }
@@ -41,7 +48,7 @@ public class ConnectionManager {
             executorService.execute(() -> {
                 DeviceConnection dc = mDeviceConnectionMap.get(ip + ":" + remotePort);
                 if (dc == null) {
-                    LogUtil.warning("dc1设备未上线 ip:" + ip + ":" + localPort);
+                    logger.error("dc1设备未上线 {}:{}", ip, localPort);
                 } else {
                     dc.processMessage(msg);
                 }
